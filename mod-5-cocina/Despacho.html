@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista de Despacho de Camareros</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados si son necesarios, pero intentamos usar solo Tailwind */
+        .tab-active {
+            @apply bg-green-900 text-white; /* Fondo verde oscuro para la pestaña activa */
+        }
+        .tab-inactive {
+            @apply bg-gray-200 text-gray-700 hover:bg-gray-300; /* Fondo gris claro para las inactivas */
+        }
+    </style>
+</head>
+<body class="bg-white p-4 sm:p-8 md:p-12">
+
+    <div class="max-w-3xl mx-auto">
+        <header class="flex justify-between items-center mb-6">
+            <div class="flex items-center space-x-2">
+                <svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-1.343 3-3s-1.343-3-3-3m0 6a3 3 0 100-6m-9 6a3 3 0 110-6m-6 6h2m-2 0H5"></path></svg>
+                <span class="font-bold text-lg">Charlotte KOS</span>
+            </div>
+            <div class="h-8 w-8 rounded-full bg-orange-200 flex items-center justify-center text-orange-700 font-semibold">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+            </div>
+        </header>
+
+        <h1 class="text-3xl font-bold mb-1">Vista de Despacho de Camareros</h1>
+        <p class="text-gray-500 mb-8">Feed en vivo de todos los pedidos listos para despachar.</p>
+
+        <div class="flex rounded-md overflow-hidden mb-8 shadow-sm">
+            <button class="flex-1 px-4 py-2 text-sm font-medium transition-colors duration-150 tab-active">
+                Todos
+            </button>
+            <button class="flex-1 px-4 py-2 text-sm font-medium transition-colors duration-150 bg-gray-200 text-gray-700 hover:bg-gray-300">
+                Mesas
+            </button>
+            <button class="flex-1 px-4 py-2 text-sm font-medium transition-colors duration-150 bg-gray-200 text-gray-700 hover:bg-gray-300">
+                Delivery
+            </button>
+        </div>
+
+        <div class="space-y-4">
+            <div class="bg-white p-4 border border-gray-200 rounded-lg shadow-sm">
+                <div class="flex justify-between items-start mb-1">
+                    <h2 class="text-xl font-bold">MESA 5</h2>
+                    <span class="text-sm text-gray-500">hace 2 min</span>
+                </div>
+                <p class="text-green-600 font-semibold mb-2">Listo</p>
+                <p class="text-gray-700 text-sm">2x Hamburguesa Clásica, 1x Patatas Fritas</p>
+            </div>
+
+            <div class="bg-white p-4 border border-gray-200 rounded-lg shadow-sm">
+                <div class="flex justify-between items-start mb-1">
+                    <h2 class="text-xl font-bold">DELIVERY #104</h2>
+                    <span class="text-sm text-gray-500">hace 5 min</span>
+                </div>
+                <p class="text-green-600 font-semibold mb-2">Listo</p>
+                <p class="text-gray-700 text-sm">1x Bol Vegano, 1x Ensalada</p>
+            </div>
+
+            <div class="bg-white p-4 border border-gray-200 rounded-lg shadow-sm">
+                <div class="flex justify-between items-start mb-1">
+                    <h2 class="text-xl font-bold">MESA 12</h2>
+                    <span class="text-sm text-gray-500">hace 8 min</span>
+                </div>
+                <p class="text-green-600 font-semibold mb-2">Listo</p>
+                <p class="text-gray-700 text-sm">1x Filete con Patatas, 1x Sopa del Día</p>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <button class="w-full py-4 bg-green-800 text-white font-bold text-lg rounded-lg shadow-lg hover:bg-green-700 transition-colors duration-150 flex items-center justify-center space-x-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                <span>MARCAR ENTREGADO</span>
+            </button>
+        </div>
+
+    </div>
+
+</body>
+</html>
