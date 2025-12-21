@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Seguimiento de Pedido — FoodieGo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root{
+        --bg:#f3fbf6;
+        --muted:#6b7280;
+        --accent:#155e3b;
+      }
+      html,body{height:100%;}
+      body{font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:var(--bg);}
+      /* small shadow like the design */
+      .panel{background:#ffffff; border-radius:8px; box-shadow:0 1px 0 rgba(16,24,40,0.03);} 
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <header class="border-b border-gray-200 bg-white">
+      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+           <div class="text-2xl font-bold text-gray-900">FoodieGo</div>
+        </div>
+        <nav class="flex items-center gap-6 text-sm text-gray-700">
+            <a href="#" class="hover:text-gray-900">Menú</a>
+            <a href="#" class="hover:text-gray-900">Pedidos</a>
+            <a href="#" class="hover:text-gray-900">Cuenta</a>
+          <button aria-label="notifications" class="w-9 h-9 rounded-md bg-green-800/10 text-green-800 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+          </button>
+          <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder" alt="avatar" class="w-9 h-9 rounded-full object-cover">
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-12">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <section class="lg:col-span-2">
+          <h1 class="text-4xl font-extrabold text-gray-900">Order Tracking</h1>
+          <p class="text-sm text-gray-500 mt-2">Order #123456789</p>
+
+          <div class="mt-8 panel p-6">
+            <h3 class="text-sm font-semibold text-gray-800">Order Status</h3>
+            <div class="mt-3">
+              <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                <div class="h-2 rounded-full bg-green-800" style="width:28%"></div>
+              </div>
+                <div class="text-sm text-gray-500 mt-2">Pendiente</div>
+            </div>
+          </div>
+
+          <div class="mt-8 panel p-6">
+            <h3 class="text-lg font-semibold text-gray-900">Order Details</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6 mt-4 text-sm text-gray-600">
+              <div class="text-gray-500">Service Type</div>
+                <div class="text-right">Entrega</div>
+                <div class="text-gray-500">Tiempo estimado restante</div>
+                <div class="text-right">15 minutos</div>
+            </div>
+
+            <h4 class="mt-6 font-semibold text-gray-800">Order Items</h4>
+            <div class="divide-y divide-gray-100 mt-3">
+              <div class="py-4 flex items-start justify-between">
+                <div>
+                   <div class="font-medium text-gray-800">Sándwich de Pollo Picante</div>
+                   <div class="text-xs text-gray-400">1x</div>
+                </div>
+                <div class="text-gray-800">$8.99</div>
+              </div>
+              <div class="py-4 flex items-start justify-between">
+                <div>
+                   <div class="font-medium text-gray-800">Papas Fritas</div>
+                   <div class="text-xs text-gray-400">1x</div>
+                </div>
+                <div class="text-gray-800">$2.99</div>
+              </div>
+              <div class="py-4 flex items-start justify-between">
+                <div>
+                   <div class="font-medium text-gray-800">Coca-Cola</div>
+                   <div class="text-xs text-gray-400">1x</div>
+                </div>
+                <div class="text-gray-800">$1.99</div>
+              </div>
+            </div>
+
+            <h4 class="mt-6 font-semibold text-gray-800">Payment Details</h4>
+            <div class="grid grid-cols-2 gap-y-2 gap-x-6 mt-3 text-sm text-gray-600">
+              <div class="text-gray-500">Subtotal</div>
+              <div class="text-right">$13.97</div>
+                <div class="text-gray-500">Costo de envío</div>
+                <div class="text-right">$2.00</div>
+                <div class="text-gray-500 font-semibold">Total</div>
+                <div class="text-right font-semibold">$15.97</div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button class="inline-flex items-center gap-2 bg-green-800 text-white px-4 py-2 rounded-md shadow hover:bg-green-900">Contactar Soporte</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="hidden lg:block">
+          <div class="panel p-6 sticky top-24">
+              <div class="text-sm text-gray-500">¿Necesitas ayuda?</div>
+              <div class="mt-4 text-gray-800 font-semibold">Soporte disponible</div>
+              <p class="mt-2 text-sm text-gray-600">Estamos aquí si tienes preguntas sobre tu pedido.</p>
+              <div class="mt-6">
+                <button class="w-full bg-white border border-gray-200 text-gray-800 px-4 py-2 rounded-md">Ver Pedido</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </body>
+</html>
