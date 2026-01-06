@@ -7,6 +7,11 @@
 	background-color: #f2f7f1;
 }
 
+html,
+body {
+	overflow-x: hidden;
+}
+
 .bg-brand-800 {
 	background-color: #0f4a22;
 }
