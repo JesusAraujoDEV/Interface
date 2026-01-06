@@ -1,29 +1,6 @@
 /* Fallback visual para el selector Entrega / Recogida.
-	 La lógica en `page.js` ya alterna `aria-pressed`, así que esto asegura
-	 que siempre se vea el estado activo aunque Tailwind/brand no aplique. */
-
-/* Fallback de utilidades tipo Tailwind para la paleta brand usada en esta vista */
-.bg-brand-50 {
-	background-color: #f2f7f1;
-}
-
-html,
-body {
-	overflow-x: hidden;
-}
-
-.bg-brand-800 {
-	background-color: #0f4a22;
-}
-
-.border-brand-800 {
-	border-color: #0f4a22;
-}
-
-/* Fallback del fondo (equivalente a `bg-brand-50`) */
-body {
-	background-color: #f2f7f1;
-}
+	La lógica en `page.js` ya alterna `aria-pressed`, así que esto asegura
+	que siempre se vea el estado activo aunque Tailwind/brand no aplique. */
 
 #deliveryBtn[aria-pressed="true"],
 #pickupBtn[aria-pressed="true"] {

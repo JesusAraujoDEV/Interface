@@ -116,7 +116,7 @@ form.addEventListener('submit', function (e) {
   if (valid) {
     // Navegar a la siguiente vista (lista de pedidos)
     const mode = deliveryBtn.getAttribute('aria-pressed') === 'true' ? 'delivery' : 'pickup';
-    const nextUrl = new URL('../pedidos/index.html', window.location.href);
+    const nextUrl = new URL('../order-tracking/index.html', window.location.href);
     nextUrl.searchParams.set('mode', mode);
     window.location.href = nextUrl.toString();
   } else {
