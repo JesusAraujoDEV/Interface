@@ -24,10 +24,17 @@
 	</head>
 	<body class="min-h-screen flex items-center justify-center">
 	<div class="w-full max-w-md h-screen bg-white shadow-md">
+			<script>
+				function goBackToOrders() {
+					const u = new URL('../pedidos/index.html', window.location.href);
+					u.search = window.location.search;
+					window.location.href = u.toString();
+				}
+			</script>
 			<!-- Header -->
 			<header class="px-4 py-4 border-b bg-white sticky top-0">
 				  <div class="flex items-center gap-3">
-				  <button aria-label="back" class="p-1">
+				  <button aria-label="back" class="p-1" onclick="goBackToOrders()">
 						<!-- back arrow -->
 						<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />

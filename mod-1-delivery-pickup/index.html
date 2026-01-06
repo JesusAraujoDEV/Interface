@@ -166,9 +166,11 @@
         }
 
         if (valid) {
-          // Simular envío o avanzar
-          alert('Formulario válido — procediendo al menú.');
-          // Aquí podrías redirigir o enviar datos
+          // Navegar a la siguiente vista (lista de pedidos)
+          const mode = (deliveryBtn.getAttribute('aria-pressed') === 'true') ? 'delivery' : 'pickup';
+          const nextUrl = new URL('./pedidos/index.html', window.location.href);
+          nextUrl.searchParams.set('mode', mode);
+          window.location.href = nextUrl.toString();
         } else {
           // Scroll to first error
           const firstErr = document.querySelector('p.text-red-600:not(.hidden)');

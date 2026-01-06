@@ -23,9 +23,16 @@
 	</head>
 	<body class="bg-gray-100 min-h-screen flex items-start justify-center py-6">
 		<div class="w-full max-w-md bg-white shadow-sm rounded-lg overflow-hidden">
+			<script>
+				function goTo(relPath) {
+					const u = new URL(relPath, window.location.href);
+					u.search = window.location.search;
+					window.location.href = u.toString();
+				}
+			</script>
 			<!-- Header -->
 			<div class="flex items-center gap-3 px-4 py-3 border-b">
-				<button aria-label="Back" class="text-gray-600">←</button>
+				<button aria-label="Back" class="text-gray-600" onclick="goTo('../pedidos/index.html')">←</button>
 				<h1 class="flex-1 text-center font-semibold">Pedido #12345</h1>
 				<div class="w-6"></div>
 			</div>
@@ -100,7 +107,7 @@
 
 			<!-- Footer buttons -->
 			<div class="px-5 pb-6 pt-2">
-				<button class="w-full mb-3 py-3 rounded-md bg-brand text-white font-semibold shadow-sm">Accept Order</button>
+				<button class="w-full mb-3 py-3 rounded-md bg-brand text-white font-semibold shadow-sm" onclick="goTo('../Order Tracking/index.html')">Ver tracking</button>
 				<button class="w-full mb-3 py-3 rounded-md bg-gray-100 border border-gray-200 font-medium">Ready for Dispatch</button>
 				<button class="w-full py-3 rounded-md text-red-600 font-medium bg-white">Cancel Order</button>
 			</div>
