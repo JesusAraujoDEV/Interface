@@ -33,17 +33,25 @@
     </style>
   </head>
   <body class="bg-brand-50 min-h-screen text-gray-800 font-sans">
-    <header class="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
+    <header class="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <div class="w-4 h-4 bg-black rotate-45"></div>
         <span class="font-semibold">Foodie</span>
       </div>
-      <nav class="hidden md:flex items-center gap-6 text-sm text-gray-700">
-        <a href="#">Menú</a>
-        <a href="#">Ofertas</a>
-        <a href="#">Recompensas</a>
-        <button class="flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow-sm">Carrito <span class="text-xs bg-gray-200 rounded-full px-2">0</span></button>
-        <img src="https://images.unsplash.com/photo-1545996124-1b0a7b8be1d1?q=80&w=40&auto=format&fit=crop&crop=faces" alt="avatar" class="w-9 h-9 rounded-full border"/>
+      </div>
+
+      <!-- Nav responsive: scroll horizontal en móvil, fila normal en desktop -->
+      <nav class="mt-3 sm:mt-4">
+        <div class="flex items-center gap-3 sm:gap-6 text-sm text-gray-700 overflow-x-auto whitespace-nowrap pb-2 sm:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <a href="#" class="shrink-0 hover:text-gray-900">Menú</a>
+          <a href="#" class="shrink-0 hover:text-gray-900">Ofertas</a>
+          <a href="#" class="shrink-0 hover:text-gray-900">Recompensas</a>
+          <button class="shrink-0 flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow-sm">
+            Carrito <span class="text-xs bg-gray-200 rounded-full px-2">0</span>
+          </button>
+          <img src="https://images.unsplash.com/photo-1545996124-1b0a7b8be1d1?q=80&w=40&auto=format&fit=crop&crop=faces" alt="avatar" class="shrink-0 w-9 h-9 rounded-full border"/>
+        </div>
       </nav>
     </header>
 
@@ -76,10 +84,30 @@
             <p id="err-email" class="mt-1 text-xs text-red-600 hidden">Introduce un correo válido.</p>
           </div>
 
-          <div id="addressBlock">
-            <label class="block text-sm font-medium mb-2">Dirección de entrega</label>
-            <input id="address" name="address" placeholder="Ingresa tu dirección de entrega" class="w-full rounded-md border border-gray-300 p-3 bg-white placeholder-gray-400 input-shadow" />
-            <p id="err-address" class="mt-1 text-xs text-red-600 hidden">Por favor ingresa la dirección.</p>
+          <div id="deliveryCoverageBlock" class="space-y-4">
+            <div>
+              <div class="flex items-center justify-between">
+                <label class="block text-sm font-medium">Zonas que cubrimos</label>
+                <span class="text-xs text-gray-500">Entrega</span>
+              </div>
+
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button type="button" data-zone="Prebo" class="zone-chip px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-700 hover:border-gray-300">Prebo</button>
+                <button type="button" data-zone="Trigal" class="zone-chip px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-700 hover:border-gray-300">Trigal</button>
+                <button type="button" data-zone="Viñedo" class="zone-chip px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-700 hover:border-gray-300">Viñedo</button>
+                <button type="button" data-zone="La Granja" class="zone-chip px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-700 hover:border-gray-300">La Granja</button>
+                <button type="button" data-zone="Centro" class="zone-chip px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-700 hover:border-gray-300">Centro</button>
+              </div>
+
+              <input type="hidden" id="zone" name="zone" />
+              <p id="err-zone" class="mt-2 text-xs text-red-600 hidden">Selecciona una zona de cobertura.</p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-2">Dirección específica</label>
+              <input id="addressDetail" name="addressDetail" placeholder="Calle, número, apto, referencia..." class="w-full rounded-md border border-gray-300 p-3 bg-white placeholder-gray-400 input-shadow" />
+              <p id="err-address" class="mt-1 text-xs text-red-600 hidden">Por favor ingresa la dirección específica.</p>
+            </div>
           </div>
 
           <div class="flex items-center justify-between mt-2 text-sm font-semibold">
@@ -98,8 +126,29 @@
       // Toggle Delivery / Pickup
       const deliveryBtn = document.getElementById('deliveryBtn');
       const pickupBtn = document.getElementById('pickupBtn');
-      const addressBlock = document.getElementById('addressBlock');
+      const deliveryCoverageBlock = document.getElementById('deliveryCoverageBlock');
       const coverage = document.getElementById('coverage');
+
+      // Zonas de cobertura (solo entrega)
+      const zoneInput = document.getElementById('zone');
+      const zoneChips = document.querySelectorAll('.zone-chip');
+
+      function setZone(zone) {
+        zoneInput.value = zone;
+        zoneChips.forEach(btn => {
+          const isActive = btn.dataset.zone === zone;
+          btn.classList.toggle('bg-brand-800', isActive);
+          btn.classList.toggle('text-white', isActive);
+          btn.classList.toggle('border-brand-800', isActive);
+          btn.classList.toggle('bg-white', !isActive);
+          btn.classList.toggle('text-gray-700', !isActive);
+          btn.classList.toggle('border-gray-200', !isActive);
+        });
+      }
+
+      zoneChips.forEach(btn => {
+        btn.addEventListener('click', () => setZone(btn.dataset.zone));
+      });
 
       function setMode(mode) {
         if (mode === 'delivery') {
@@ -111,11 +160,11 @@
           pickupBtn.classList.add('toggle-inactive','text-gray-700');
           pickupBtn.setAttribute('aria-pressed','false');
 
-          addressBlock.classList.remove('hidden');
-          coverage.textContent = 'Dirección fuera del área de cobertura';
+          deliveryCoverageBlock.classList.remove('hidden');
+          coverage.textContent = 'Selecciona una zona para validar cobertura';
         } else {
           pickupBtn.classList.remove('toggle-inactive','text-gray-700');
-          pickupBtn.classList.add('bg-gray-100','text-gray-700');
+          pickupBtn.classList.add('bg-brand-800','text-white');
           pickupBtn.setAttribute('aria-pressed','true');
 
           deliveryBtn.classList.remove('bg-brand-800','text-white');
@@ -123,7 +172,7 @@
           deliveryBtn.setAttribute('aria-pressed','false');
 
           // Para recogida, ocultar dirección y actualizar mensaje
-          addressBlock.classList.add('hidden');
+          deliveryCoverageBlock.classList.add('hidden');
           coverage.textContent = 'Recogida — no requiere envío';
         }
       }
@@ -134,12 +183,16 @@
       // Initialize default
       setMode('delivery');
 
+  // Selección por defecto (puedes cambiarla o quitarla)
+  setZone('Prebo');
+
       // Basic validation
       const form = document.getElementById('checkoutForm');
       const errName = document.getElementById('err-name');
       const errPhone = document.getElementById('err-phone');
       const errEmail = document.getElementById('err-email');
       const errAddress = document.getElementById('err-address');
+  const errZone = document.getElementById('err-zone');
 
       function validateEmail(email) {
         return /\S+@\S+\.\S+/.test(email);
@@ -152,16 +205,18 @@
         const nameVal = document.getElementById('fullName').value.trim();
         const phoneVal = document.getElementById('phone').value.trim();
         const emailVal = document.getElementById('email').value.trim();
-        const addressVal = document.getElementById('address') ? document.getElementById('address').value.trim() : '';
+  const addressVal = document.getElementById('addressDetail') ? document.getElementById('addressDetail').value.trim() : '';
+  const zoneVal = zoneInput ? zoneInput.value.trim() : '';
 
         // Reset errors
-        [errName, errPhone, errEmail, errAddress].forEach(el => el.classList.add('hidden'));
+  [errName, errPhone, errEmail, errAddress, errZone].forEach(el => el.classList.add('hidden'));
 
         if (!nameVal) { errName.classList.remove('hidden'); valid = false; }
         if (!phoneVal) { errPhone.classList.remove('hidden'); valid = false; }
         if (!emailVal || !validateEmail(emailVal)) { errEmail.classList.remove('hidden'); valid = false; }
         // Address required only for delivery
         if (deliveryBtn.getAttribute('aria-pressed') === 'true') {
+          if (!zoneVal) { errZone.classList.remove('hidden'); valid = false; }
           if (!addressVal) { errAddress.classList.remove('hidden'); valid = false; }
         }
 
