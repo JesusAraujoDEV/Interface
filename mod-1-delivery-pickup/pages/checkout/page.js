@@ -8,6 +8,95 @@ const coverage = document.getElementById('coverage');
 const zoneInput = document.getElementById('zone');
 const zoneChips = document.querySelectorAll('.zone-chip');
 
+// Carrito (solo visualización en checkout)
+const CART_KEY = 'dp_cart_v1';
+
+function readCart() {
+  try {
+    const raw = localStorage.getItem(CART_KEY);
+    return raw ? JSON.parse(raw) : { items: [] };
+  } catch {
+    return { items: [] };
+  }
+}
+
+function parsePrice(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  const raw = String(value ?? '').trim();
+  if (!raw) return 0;
+  const cleaned = raw.replace(/[^0-9,.-]/g, '');
+  if (!cleaned) return 0;
+  let normalized = cleaned;
+  const hasComma = normalized.includes(',');
+  const hasDot = normalized.includes('.');
+  if (hasComma && hasDot) normalized = normalized.replace(/\./g, '').replace(',', '.');
+  else if (hasComma && !hasDot) normalized = normalized.replace(',', '.');
+  const num = Number(normalized);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function formatPrice(value) {
+  const num = parsePrice(value);
+  return '$' + num.toFixed(2);
+}
+
+function cartTotal(cart) {
+  return (cart.items || []).reduce((acc, it) => acc + parsePrice(it.price) * (it.qty || 0), 0);
+}
+
+function renderCartModal() {
+  const itemsEl = document.getElementById('cartModalItems');
+  const totalEl = document.getElementById('cartModalTotal');
+  if (!itemsEl || !totalEl) return;
+
+  const cart = readCart();
+  const items = cart.items || [];
+  totalEl.textContent = formatPrice(cartTotal(cart));
+
+  if (!items.length) {
+    itemsEl.innerHTML = '<div class="py-4 text-sm text-gray-600">Tu carrito está vacío.</div>';
+    return;
+  }
+
+  itemsEl.innerHTML = items
+    .map(it => {
+      const qty = it.qty || 0;
+      const lineTotal = parsePrice(it.price) * qty;
+      return `
+        <div class="py-4 flex items-start justify-between gap-4">
+          <div class="min-w-0">
+            <div class="font-semibold text-gray-900 truncate">${it.name ?? 'Producto'}</div>
+            <div class="text-sm text-gray-600 mt-0.5">${formatPrice(it.price)} · x${qty}</div>
+          </div>
+          <div class="shrink-0 text-sm font-extrabold text-gray-900">${formatPrice(lineTotal)}</div>
+        </div>
+      `;
+    })
+    .join('');
+}
+
+function openCartModal() {
+  const modal = document.getElementById('cartModal');
+  if (!modal) return;
+  renderCartModal();
+  modal.classList.remove('hidden');
+}
+
+function closeCartModal() {
+  const modal = document.getElementById('cartModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+}
+
+document.getElementById('viewCartBtn')?.addEventListener('click', openCartModal);
+document.getElementById('cartModalOverlay')?.addEventListener('click', closeCartModal);
+document.getElementById('cartModalClose')?.addEventListener('click', closeCartModal);
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const modal = document.getElementById('cartModal');
+  if (modal && !modal.classList.contains('hidden')) closeCartModal();
+});
 function setZone(zone) {
   zoneInput.value = zone;
   zoneChips.forEach(btn => {

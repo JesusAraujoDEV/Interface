@@ -33,6 +33,14 @@
   <body class="bg-brand-50 min-h-screen text-gray-800 font-sans">
     <app-header back-href="../../../shared/pages/menu/index.html" back-label="Volver al menú"></app-header>
 
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="flex justify-end">
+        <button id="viewCartBtn" type="button" class="bg-white border border-gray-200 text-gray-900 px-4 py-2 rounded-full font-semibold shadow-sm">
+          Ver carrito
+        </button>
+      </div>
+    </div>
+
     <main class="max-w-4xl mx-auto px-6 py-10">
       <section class="text-center mb-8">
         <h1 class="text-3xl md:text-4xl font-extrabold">¿Cómo quieres recibir tu pedido?</h1>
@@ -99,6 +107,28 @@
         </form>
       </section>
     </main>
+
+    <!-- Modal carrito (solo checkout) -->
+    <div id="cartModal" class="hidden fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby="cartModalTitle">
+      <div id="cartModalOverlay" class="absolute inset-0 bg-black/40"></div>
+      <div class="relative min-h-full flex items-end sm:items-center justify-center p-4" style="padding-bottom: calc(16px + env(safe-area-inset-bottom));">
+        <div class="w-full max-w-lg bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-start justify-between gap-3">
+              <h2 id="cartModalTitle" class="text-lg font-extrabold text-gray-900">Tu carrito</h2>
+              <button id="cartModalClose" type="button" class="text-sm text-gray-600 hover:text-gray-900">Cerrar</button>
+            </div>
+
+            <div id="cartModalItems" class="mt-4 divide-y divide-gray-100"></div>
+
+            <div class="mt-4 flex items-center justify-between gap-3">
+              <div class="text-sm text-gray-600">Total</div>
+              <div id="cartModalTotal" class="text-sm font-extrabold text-gray-900">$0.00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="../../../shared/components/app-header.js"></script>
     <script type="module" src="./page.js"></script>
   </body>
