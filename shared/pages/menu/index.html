@@ -36,14 +36,7 @@
 
   <body class="bg-brand-50 min-h-screen text-gray-800 font-sans">
     <!-- Header: CLONADO de checkout/order-tracking (debe mantenerse idéntico) -->
-    <header class="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-      <div class="flex items-center justify-between gap-4">
-        <div class="flex items-center gap-3 shrink-0">
-          <div class="w-4 h-4 bg-black rotate-45"></div>
-          <span class="font-semibold">Charlotte</span>
-        </div>
-      </div>
-    </header>
+    <app-header></app-header>
 
     <main class="max-w-6xl mx-auto px-6 py-6">
       <!-- Browse-First: mostramos el catálogo primero, sin pedir ubicación/login -->
@@ -763,5 +756,7 @@
       setCartUI();
       loadCatalog();
     </script>
+
+    <script type="module" src="../../components/app-header.js"></script>
   </body>
 </html>
