@@ -31,26 +31,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="bg-brand-50 min-h-screen text-gray-800 font-sans">
-    <header class="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-      <div class="flex items-center justify-between gap-4">
-        <div class="flex items-center gap-3 shrink-0">
-          <div class="w-4 h-4 bg-black rotate-45"></div>
-          <span class="font-semibold">Charlotte</span>
-        </div>
-
-        <nav class="flex-1 min-w-0">
-          <div class="min-w-0 flex flex-wrap items-center justify-end gap-3 sm:gap-6 text-sm text-gray-700">
-            <a href="#" class="shrink-0 hover:text-gray-900">Menú</a>
-            <a href="#" class="shrink-0 hover:text-gray-900">Ofertas</a>
-            <a href="#" class="shrink-0 hover:text-gray-900">Recompensas</a>
-            <button class="shrink-0 flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow-sm">
-              Carrito <span class="text-xs bg-gray-200 rounded-full px-2">0</span>
-            </button>
-            <img src="https://images.unsplash.com/photo-1545996124-1b0a7b8be1d1?q=80&w=40&auto=format&fit=crop&crop=faces" alt="avatar" class="shrink-0 w-9 h-9 rounded-full border"/>
-          </div>
-        </nav>
-      </div>
-    </header>
+    <app-header back-href="../../../shared/pages/menu/index.html" back-label="Volver al menú"></app-header>
 
     <main class="max-w-6xl mx-auto px-6 py-12">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -130,5 +111,6 @@
         </aside>
       </div>
     </main>
+    <script type="module" src="../../../shared/components/app-header.js"></script>
   </body>
 </html>
