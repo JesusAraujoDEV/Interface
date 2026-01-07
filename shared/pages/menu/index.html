@@ -42,22 +42,6 @@
           <div class="w-4 h-4 bg-black rotate-45"></div>
           <span class="font-semibold">Charlotte</span>
         </div>
-
-        <nav class="flex-1 min-w-0">
-          <div class="min-w-0 flex flex-wrap items-center justify-end gap-3 sm:gap-6 text-sm text-gray-700">
-            <a href="#" class="shrink-0 hover:text-gray-900">Menú</a>
-            <a href="#" class="shrink-0 hover:text-gray-900">Ofertas</a>
-            <a href="#" class="shrink-0 hover:text-gray-900">Recompensas</a>
-            <button class="shrink-0 flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow-sm" type="button">
-              Carrito <span id="cartBadge" class="text-xs bg-gray-200 rounded-full px-2">0</span>
-            </button>
-            <img
-              src="https://images.unsplash.com/photo-1545996124-1b0a7b8be1d1?q=80&w=40&auto=format&fit=crop&crop=faces"
-              alt="avatar"
-              class="shrink-0 w-9 h-9 rounded-full border"
-            />
-          </div>
-        </nav>
       </div>
     </header>
 
@@ -72,6 +56,14 @@
 
       <section>
         <div id="status" class="text-sm text-gray-600">Cargando menú…</div>
+
+        <div id="categoriesSection" class="mt-6 hidden">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-sm font-semibold text-gray-800">Categorías</h2>
+            <div id="activeCategoryLabel" class="text-xs text-gray-500"></div>
+          </div>
+          <div id="categories" class="mt-3 flex flex-wrap gap-2"></div>
+        </div>
 
         <div
           id="grid"
@@ -150,22 +142,40 @@
     </div>
 
     <script>
-      // --- Config BACKEND_URL (no se puede leer .env directo desde el navegador) ---
-      // Opciones recomendadas para inyectar:
-      // 1) Vite: import.meta.env.VITE_BACKEND_URL
-      // 2) Un archivo `config.js` que haga: window.__APP_CONFIG__ = { BACKEND_URL: '...' }
-      // 3) Como fallback local para prototipos: localStorage.setItem('BACKEND_URL', 'http://localhost:3000')
+      // --- Config de URLs (no se puede leer .env directo desde el navegador) ---
+      // Formas recomendadas de inyectar en frontend:
+      // 1) Vite: import.meta.env.VITE_BACKEND_URL / import.meta.env.VITE_KITCHEN_URL
+      // 2) Archivo `config.js`: window.__APP_CONFIG__ = { BACKEND_URL: '...', KITCHEN_URL: '...' }
+      // 3) Prototipo local: localStorage.setItem('KITCHEN_URL', 'https://...')
       const BACKEND_URL =
         (window.__APP_CONFIG__ && window.__APP_CONFIG__.BACKEND_URL) ||
         localStorage.getItem('BACKEND_URL') ||
         'http://localhost:3000';
 
+      const KITCHEN_URL =
+        (window.__APP_CONFIG__ && window.__APP_CONFIG__.KITCHEN_URL) ||
+        localStorage.getItem('KITCHEN_URL') ||
+        'https://charlotte-cocina.onrender.com';
+
       const CART_KEY = 'dp_cart_v1';
 
+      const state = {
+        categories: [],
+        products: [],
+        selectedCategoryId: 'all'
+      };
+
       function formatPrice(value) {
-        const num = Number(value);
+        const num = parsePrice(value);
         if (Number.isFinite(num)) return '$' + num.toFixed(2);
         return String(value);
+      }
+
+      function normalizeText(value) {
+        return String(value || '')
+          .normalize('NFD')
+          .replace(/\p{Diacritic}/gu, '')
+          .toLowerCase();
       }
 
       function readCart() {
@@ -189,9 +199,6 @@
         const cart = readCart();
         const count = cartCount(cart);
 
-        const badge = document.getElementById('cartBadge');
-        if (badge) badge.textContent = String(count);
-
         const bottomBar = document.getElementById('bottomBar');
         const payBtn = document.getElementById('payBtn');
         const cartBtn = document.getElementById('cartBtn');
@@ -207,9 +214,39 @@
         renderCartPanel();
       }
 
-      function money(value) {
-        const num = Number(value);
+      function parsePrice(value) {
+        if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+        if (value && typeof value === 'object') {
+          // Soporta variantes comunes: { value: '25' }, { amount: '25' }
+          const candidate = value.value ?? value.amount ?? value.price;
+          return parsePrice(candidate);
+        }
+
+        const raw = String(value ?? '').trim();
+        if (!raw) return 0;
+
+        // Quitar moneda/espacios: deja dígitos, ',' '.' y '-'
+        const cleaned = raw.replace(/[^0-9,.-]/g, '');
+        if (!cleaned) return 0;
+
+        // Si viene con coma decimal (ej: 25,50) y sin punto, convertimos a punto.
+        // Si viene con ambos (ej: 1.234,56) asumimos formato ES y normalizamos.
+        let normalized = cleaned;
+        const hasComma = normalized.includes(',');
+        const hasDot = normalized.includes('.');
+        if (hasComma && hasDot) {
+          // 1.234,56 -> 1234.56
+          normalized = normalized.replace(/\./g, '').replace(',', '.');
+        } else if (hasComma && !hasDot) {
+          normalized = normalized.replace(',', '.');
+        }
+
+        const num = Number(normalized);
         return Number.isFinite(num) ? num : 0;
+      }
+
+      function money(value) {
+        return parsePrice(value);
       }
 
       function cartTotal(cart) {
@@ -270,6 +307,7 @@
       }
 
       function addToCart(product) {
+        if (product && product.available === false) return;
         const cart = readCart();
         const items = cart.items || [];
 
@@ -300,73 +338,202 @@
           [];
 
         return items
-          .map(p => ({
-            id: String(p.id ?? p.sku ?? p.code ?? ''),
+          .map(p => {
+            const rawPrice =
+              p.price ??
+              p.basePrice ??
+              p.base_price ??
+              p.unitPrice ??
+              p.unit_price ??
+              p.amount ??
+              p.cost ??
+              (p.pricing && (p.pricing.price ?? p.pricing.amount)) ??
+              0;
+
+            return ({
+            id: String(p.id ?? p.product_id ?? p.sku ?? p.code ?? ''),
             name: p.name ?? p.title ?? 'Producto',
             description: p.description ?? p.shortDescription ?? '',
-            price: p.price ?? p.unitPrice ?? 0,
+            price: rawPrice,
+            available: p.available ?? p.isActive ?? true,
+            categoryId: p.categoryId ?? p.categoryId ?? p.category_id ?? p.category ?? (p.category ? p.category.id : null) ?? null,
             imageUrl:
               p.imageUrl ||
               p.image ||
               (Array.isArray(p.images) ? p.images[0] : '') ||
               'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?q=80&w=800&auto=format&fit=crop',
-          }))
+            });
+          })
           .filter(p => p.id);
       }
 
-      function mockCatalog() {
+      function normalizeCategories(json) {
+        const rows = (json && Array.isArray(json.data) && json.data) || (Array.isArray(json) && json) || [];
+        return rows
+          .map(c => ({
+            id: String(c.id ?? ''),
+            name: String(c.name ?? 'Categoría'),
+            isActive: c.isActive ?? true
+          }))
+          .filter(c => c.id);
+      }
+
+      function categoryForProduct(product, categories) {
+        if (product.categoryId) {
+          const found = categories.find(c => c.id === String(product.categoryId));
+          if (found) return found;
+        }
+
+        const name = normalizeText(product.name);
+        const byName = categories.find(c => {
+          const cn = normalizeText(c.name);
+          if (cn.includes('hamburg')) return name.includes('hamburg');
+          if (cn.includes('pizza')) return name.includes('pizza');
+          if (cn.includes('acompan')) return name.includes('papas') || name.includes('frita') || name.includes('acompan');
+          if (cn.includes('bebida')) return name.includes('coca') || name.includes('cola') || name.includes('refresco') || name.includes('jugo') || name.includes('agua');
+          return false;
+        });
+
+        return byName || null;
+      }
+
+      function imageForCategory(categoryName) {
+        const n = normalizeText(categoryName);
+        if (n.includes('hamburg')) {
+          return 'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=800&auto=format&fit=crop';
+        }
+        if (n.includes('pizza')) {
+          return 'https://images.unsplash.com/photo-1548365328-9bdb61d1db09?q=80&w=800&auto=format&fit=crop';
+        }
+        if (n.includes('acompan')) {
+          return 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?q=80&w=800&auto=format&fit=crop';
+        }
+        if (n.includes('bebida')) {
+          return 'https://images.unsplash.com/photo-1610873167013-2dd675d30ef4?q=80&w=800&auto=format&fit=crop';
+        }
+        return 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?q=80&w=800&auto=format&fit=crop';
+      }
+
+      function hydrateKitchenProducts(rawProducts, categories) {
+        return rawProducts.map(p => {
+          const cat = categoryForProduct(p, categories);
+          const categoryName = cat ? cat.name : '';
+          let imageUrl = p.imageUrl && String(p.imageUrl).trim() ? String(p.imageUrl).trim() : imageForCategory(categoryName);
+          // Si el backend manda ruta relativa ("/images/x.png" o "images/x.png"), resolvemos contra KITCHEN_URL.
+          if (imageUrl && !/^https?:\/\//i.test(imageUrl) && !/^data:/i.test(imageUrl)) {
+            const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+            imageUrl = `${KITCHEN_URL}${path}`;
+          }
+          return {
+            ...p,
+            price: money(p.price),
+            available: p.available !== false,
+            categoryId: cat ? cat.id : null,
+            categoryName,
+            imageUrl
+          };
+        });
+      }
+
+      function mockKitchenCategories() {
         return {
+          success: true,
+          data: [
+            { id: 'hamburguesas', name: 'Hamburguesas', isActive: true },
+            { id: 'pizzas', name: 'Pizzas', isActive: true },
+            { id: 'acompanamientos', name: 'Acompañamientos', isActive: true },
+            { id: 'bebidas', name: 'Bebidas', isActive: true }
+          ]
+        };
+      }
+
+      function mockKitchenCatalog() {
+        return {
+          source: 'kitchen-api',
           items: [
             {
-              id: 'sw-pollo-picante',
-              name: 'Sándwich de Pollo Picante',
-              description: 'Crujiente, jugoso y con el picante justo.',
-              price: 8.99,
-              imageUrl:
-                'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=800&auto=format&fit=crop'
+              product_id: 'a5eccd9f-8b62-4ba5-ac9e-21ca43199718',
+              name: 'Hamburguesa Royal',
+              price: '25',
+              available: true
             },
             {
-              id: 'papas-fritas',
+              product_id: 'd4f1aa76-bd68-417e-bde1-67fba5d03f71',
+              name: 'Hamburguesa Clásica',
+              price: '18',
+              available: true
+            },
+            {
+              product_id: '01391bb6-03cb-4f77-b091-f073962b4d20',
+              name: 'Pizza Pepperoni',
+              price: '35',
+              available: true
+            },
+            {
+              product_id: 'f584d2e7-f103-433d-b770-f68bbeaba5e4',
               name: 'Papas Fritas',
-              description: 'Doradas, calientes y perfectas para compartir.',
-              price: 2.99,
-              imageUrl:
-                'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?q=80&w=800&auto=format&fit=crop'
+              price: '12',
+              available: true
             },
             {
-              id: 'coca-cola',
-              name: 'Coca‑Cola',
-              description: 'Bien fría, como tiene que ser.',
-              price: 1.99,
-              imageUrl:
-                'https://images.unsplash.com/photo-1610873167013-2dd675d30ef4?q=80&w=800&auto=format&fit=crop'
+              product_id: '20b1031a-b912-47f9-8a99-165aa1338afa',
+              name: 'Pizza Pizza',
+              price: '20',
+              available: true
             },
             {
-              id: 'ensalada-fresca',
-              name: 'Ensalada Fresca',
-              description: 'Ligera, crujiente y con aderezo de la casa.',
-              price: 5.49,
-              imageUrl:
-                'https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?q=80&w=800&auto=format&fit=crop'
-            },
-            {
-              id: 'combo-doble',
-              name: 'Combo Doble',
-              description: 'Más sabor, más antojo. Ideal para hambre seria.',
-              price: 12.49,
-              imageUrl:
-                'https://images.unsplash.com/photo-1550547660-ef8d1f3a7b6f?q=80&w=800&auto=format&fit=crop'
-            },
-            {
-              id: 'postre-choco',
-              name: 'Postre Chocolate',
-              description: 'Un final dulce que se siente premium.',
-              price: 3.99,
-              imageUrl:
-                'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=800&auto=format&fit=crop'
+              product_id: 'fe786c35-911c-4c7e-990f-60c75aa367c1',
+              name: 'Pizza Pizza',
+              price: '20',
+              available: true
             }
           ]
         };
+      }
+
+      function renderCategories(categories) {
+        const section = document.getElementById('categoriesSection');
+        const wrap = document.getElementById('categories');
+        const label = document.getElementById('activeCategoryLabel');
+        if (!section || !wrap || !label) return;
+
+        if (!categories.length) {
+          section.classList.add('hidden');
+          return;
+        }
+
+        section.classList.remove('hidden');
+        const selected = state.selectedCategoryId;
+        const selectedName =
+          selected === 'all'
+            ? 'Todos'
+            : categories.find(c => c.id === selected)?.name || '';
+        label.textContent = selectedName ? `Mostrando: ${selectedName}` : '';
+
+        const chips = [
+          { id: 'all', name: 'Todos' },
+          ...categories.map(c => ({ id: c.id, name: c.name }))
+        ];
+
+        wrap.innerHTML = chips
+          .map(c => {
+            const isActive = c.id === selected;
+            const base =
+              'px-3 py-1.5 rounded-full text-sm font-semibold border transition';
+            const active = 'bg-brand-800 text-white border-brand-800';
+            const idle = 'bg-white text-gray-700 border-gray-200 hover:border-gray-300';
+            return `
+              <button type="button" data-cat="${c.id}" class="${base} ${isActive ? active : idle}">
+                ${c.name}
+              </button>
+            `;
+          })
+          .join('');
+      }
+
+      function filteredProducts() {
+        if (state.selectedCategoryId === 'all') return state.products;
+        return state.products.filter(p => p.categoryId === state.selectedCategoryId);
       }
 
       function renderProducts(products) {
@@ -379,21 +546,36 @@
           card.className =
             'bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-[0_1px_0_rgba(0,0,0,0.03)]';
 
+          const unavailable = product.available === false;
+          const pill = unavailable
+            ? '<span class="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-1 rounded-full">No disponible</span>'
+            : '';
+          const category = product.categoryName
+            ? `<div class="text-xs text-gray-500 mt-1">${product.categoryName}</div>`
+            : '';
+          const addBtnClass = unavailable
+            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            : 'bg-brand-800 text-white hover:bg-brand-700';
+          const addBtnText = unavailable ? 'No disponible' : 'Añadir';
+
           card.innerHTML = `
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden">
               <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-full object-cover" loading="lazy" />
             </div>
             <div class="p-5">
               <div class="flex items-start justify-between gap-3">
-                <h3 class="text-lg font-bold text-gray-900 leading-snug">${product.name}</h3>
+                <div class="min-w-0">
+                  <h3 class="text-lg font-bold text-gray-900 leading-snug">${product.name}</h3>
+                  ${category}
+                </div>
                 <div class="shrink-0 text-sm font-extrabold text-gray-900">${formatPrice(product.price)}</div>
               </div>
               ${product.description ? `<p class="mt-2 text-sm text-gray-600">${product.description}</p>` : ''}
               <div class="mt-4 flex items-center justify-between gap-3">
-                <button data-add="${product.id}" type="button" class="bg-brand-800 text-white px-4 py-2 rounded-full font-semibold shadow hover:bg-brand-700">
-                  Añadir
+                <button ${unavailable ? 'disabled' : ''} data-add="${product.id}" type="button" class="${addBtnClass} px-4 py-2 rounded-full font-semibold shadow">
+                  ${addBtnText}
                 </button>
-                <span class="text-xs text-gray-500">Listo en minutos</span>
+                <span class="text-xs text-gray-500">${pill || 'Listo en minutos'}</span>
               </div>
             </div>
           `;
@@ -406,6 +588,7 @@
           e => {
             const btn = e.target.closest('button[data-add]');
             if (!btn) return;
+            if (btn.hasAttribute('disabled')) return;
             const id = btn.getAttribute('data-add');
             const product = products.find(p => p.id === id);
             if (product) addToCart(product);
@@ -414,30 +597,82 @@
         );
       }
 
+      async function loadKitchenCategories() {
+        const res = await fetch(`${KITCHEN_URL}/api/kitchen/categories?activeOnly=true`, {
+          method: 'GET',
+          headers: { Accept: 'application/json' }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        return normalizeCategories(json);
+      }
+
+      async function loadKitchenCatalog() {
+        const res = await fetch(`${KITCHEN_URL}/api/kitchen/products`, {
+          method: 'GET',
+          headers: { Accept: 'application/json' }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        return normalizeCatalog(json);
+      }
+
       async function loadCatalog() {
         const status = document.getElementById('status');
 
         try {
-          const res = await fetch(`${BACKEND_URL}/api/dp/v1/catalog`, {
-            method: 'GET',
-            headers: { Accept: 'application/json' }
-          });
+          // Preferimos kitchen-api (según tu backend). Si falla, caemos a dp/v1/catalog.
+          let categories = [];
+          let products = [];
 
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const json = await res.json();
-          const products = normalizeCatalog(json);
+          try {
+            categories = await loadKitchenCategories();
+          } catch {
+            categories = normalizeCategories(mockKitchenCategories());
+          }
 
-          if (!products.length) throw new Error('Catálogo vacío o formato desconocido');
+          try {
+            products = await loadKitchenCatalog();
+          } catch {
+            products = normalizeCatalog(mockKitchenCatalog());
+          }
+
+          // Enriquecer con categoría + imágenes por categoría
+          products = hydrateKitchenProducts(products, categories);
+
+          // Si por alguna razón no hay items kitchen, intentamos el catálogo dp
+          if (!products.length) {
+            const res = await fetch(`${BACKEND_URL}/api/dp/v1/catalog`, {
+              method: 'GET',
+              headers: { Accept: 'application/json' }
+            });
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const json = await res.json();
+            products = normalizeCatalog(json);
+          }
+
+          state.categories = categories;
+          state.products = products;
+          state.selectedCategoryId = 'all';
 
           if (status) status.textContent = '';
-          renderProducts(products);
+          renderCategories(state.categories);
+          renderProducts(filteredProducts());
         } catch (err) {
-          // Demo: si la API no está disponible, mostramos un catálogo simulado.
-          const products = normalizeCatalog(mockCatalog());
-          if (status)
-            status.textContent =
-              'Mostrando catálogo de ejemplo (API no disponible o sin CORS).';
-          renderProducts(products);
+          // Demo: si la API no está disponible, mostramos kitchen simulado.
+          const categories = normalizeCategories(mockKitchenCategories());
+          const products = hydrateKitchenProducts(
+            normalizeCatalog(mockKitchenCatalog()),
+            categories
+          );
+          state.categories = categories;
+          state.products = products;
+          state.selectedCategoryId = 'all';
+
+          if (status) status.textContent = 'Mostrando catálogo de ejemplo (API no disponible o sin CORS).';
+          renderCategories(state.categories);
+          renderProducts(filteredProducts());
         }
       }
 
@@ -513,6 +748,16 @@
         if (action === 'inc') updateQty(id, 1);
         else if (action === 'dec') updateQty(id, -1);
         else if (action === 'remove') removeItem(id);
+      });
+
+      document.getElementById('categories')?.addEventListener('click', e => {
+        const btn = e.target.closest('button[data-cat]');
+        if (!btn) return;
+        const id = btn.getAttribute('data-cat');
+        if (!id) return;
+        state.selectedCategoryId = id;
+        renderCategories(state.categories);
+        renderProducts(filteredProducts());
       });
 
       setCartUI();
