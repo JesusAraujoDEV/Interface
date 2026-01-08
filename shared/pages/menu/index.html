@@ -304,6 +304,7 @@
       function addToCart(product) {
         if (product && product.available === false) return;
         const cart = readCart();
+        const prevCount = cartCount(cart);
         const items = cart.items || [];
 
         const existing = items.find(it => it.id === product.id);
@@ -322,6 +323,9 @@
         cart.items = items;
         writeCart(cart);
         setCartUI();
+
+        // Si el usuario está agregando el primer item, no abrir el carrito automáticamente.
+        if (prevCount === 0) toggleCart(false);
       }
 
       function normalizeCatalog(json) {
@@ -567,7 +571,7 @@
               </div>
               ${product.description ? `<p class="mt-2 text-sm text-gray-600">${product.description}</p>` : ''}
               <div class="mt-4 flex items-center justify-between gap-3">
-                <button ${unavailable ? 'disabled' : ''} data-add="${product.id}" type="button" class="${addBtnClass} px-4 py-2 rounded-full font-semibold shadow">
+                <button ${unavailable ? 'disabled' : ''} data-add="${product.id}" type="button" class="${addBtnClass} inline-flex items-center justify-center px-5 py-2.5 rounded-full font-semibold shadow">
                   ${addBtnText}
                 </button>
                 <span class="text-xs text-gray-500">${pill || 'Listo en minutos'}</span>
