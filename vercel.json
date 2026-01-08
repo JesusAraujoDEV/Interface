@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/config.js", "destination": "/api/config.js" },
+    { "source": "/", "destination": "/mod-4-seguridad/Inicio%20sesión/Inicio-sesion.html" }
+  ]
+}
