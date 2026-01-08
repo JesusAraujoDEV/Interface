@@ -35,6 +35,21 @@ function formatShippingCost(value) {
   return '$' + num.toFixed(2);
 }
 
+function getSelectedZoneButton() {
+  return zoneChips.find(btn => btn.classList.contains('bg-brand-800')) || null;
+}
+
+function getSelectedZone() {
+  const btn = getSelectedZoneButton();
+  if (!btn) return null;
+  return {
+    zone_id: btn.dataset.zoneId || '',
+    zone_name: btn.dataset.zone || '',
+    estimated_eta_minutes: btn.dataset.etaMinutes || '',
+    shipping_cost: btn.dataset.shippingCost || ''
+  };
+}
+
 function updateCoverageFromSelectedChip() {
   const selected = zoneChips.find(btn => btn.classList.contains('bg-brand-800'));
   if (!selected) return;
@@ -139,9 +154,14 @@ document.addEventListener('keydown', e => {
   if (modal && !modal.classList.contains('hidden')) closeCartModal();
 });
 function setZone(zone) {
-  zoneInput.value = zone;
+  const byName = zoneChips.find(btn => btn.dataset.zone === zone);
+  const byId = zoneChips.find(btn => btn.dataset.zoneId === zone);
+  const target = byName || byId || null;
+
+  // Guardamos zone_id si existe; si no, dejamos el nombre (fallback)
+  zoneInput.value = target ? (target.dataset.zoneId || target.dataset.zone || '') : String(zone ?? '');
   zoneChips.forEach(btn => {
-    const isActive = btn.dataset.zone === zone;
+    const isActive = target ? btn === target : btn.dataset.zone === zone;
     btn.classList.toggle('bg-brand-800', isActive);
     btn.classList.toggle('text-white', isActive);
     btn.classList.toggle('border-brand-800', isActive);
@@ -255,9 +275,83 @@ const errPhone = document.getElementById('err-phone');
 const errEmail = document.getElementById('err-email');
 const errAddress = document.getElementById('err-address');
 const errZone = document.getElementById('err-zone');
+const errSubmit = document.getElementById('err-submit');
+const proceedBtn = document.getElementById('proceedBtn');
 
 function validateEmail(email) {
   return /\S+@\S+\.\S+/.test(email);
+}
+
+function setSubmitError(message) {
+  if (!errSubmit) return;
+  if (!message) {
+    errSubmit.textContent = '';
+    errSubmit.classList.add('hidden');
+    return;
+  }
+  errSubmit.textContent = message;
+  errSubmit.classList.remove('hidden');
+}
+
+function buildOrderPayload() {
+  const isDelivery = deliveryBtn.getAttribute('aria-pressed') === 'true';
+  const service_type = isDelivery ? 'DELIVERY' : 'PICKUP';
+  const zone = isDelivery ? getSelectedZone() : null;
+
+  const cart = readCart();
+  const items = (cart.items || [])
+    .filter(it => (it.qty || 0) > 0)
+    .map(it => ({
+      product_id: it.id,
+      product_name: it.name,
+      quantity: it.qty,
+      unit_price: parsePrice(it.price)
+    }));
+
+  const customer = {
+    name: document.getElementById('fullName').value.trim(),
+    phone: document.getElementById('phone').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    address: isDelivery
+      ? (document.getElementById('addressDetail') ? document.getElementById('addressDetail').value.trim() : '')
+      : ''
+  };
+
+  const payload = {
+    service_type,
+    customer,
+    items
+  };
+
+  if (isDelivery) payload.zone_id = zone && zone.zone_id ? zone.zone_id : '';
+  return payload;
+}
+
+async function createOrder() {
+  const base = normalizeBaseUrl(getDpUrl());
+  const url = base ? `${base}/api/dp/v1/orders` : '/api/dp/v1/orders';
+  const payload = buildOrderPayload();
+
+  if (!payload.items.length) {
+    throw new Error('Tu carrito está vacío. Agrega productos antes de continuar.');
+  }
+  if (payload.service_type === 'DELIVERY' && !payload.zone_id) {
+    throw new Error('No pudimos identificar la zona (zone_id). Selecciona una zona válida.');
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = data && (data.message || data.error) ? (data.message || data.error) : 'No se pudo crear la orden.';
+    throw new Error(msg);
+  }
+
+  return data;
 }
 
 form.addEventListener('submit', function (e) {
@@ -274,6 +368,7 @@ form.addEventListener('submit', function (e) {
 
   // Reset errors
   [errName, errPhone, errEmail, errAddress, errZone].forEach(el => el.classList.add('hidden'));
+  setSubmitError('');
 
   if (!nameVal) {
     errName.classList.remove('hidden');
@@ -301,11 +396,31 @@ form.addEventListener('submit', function (e) {
   }
 
   if (valid) {
-    // Navegar a la siguiente vista (lista de pedidos)
     const mode = deliveryBtn.getAttribute('aria-pressed') === 'true' ? 'delivery' : 'pickup';
-    const nextUrl = new URL('../order-tracking/index.html', window.location.href);
-    nextUrl.searchParams.set('mode', mode);
-    window.location.href = nextUrl.toString();
+    localStorage.setItem('dp_service_type', mode);
+
+    if (proceedBtn) {
+      proceedBtn.disabled = true;
+      proceedBtn.textContent = 'Creando orden…';
+    }
+
+    (async () => {
+      try {
+        const result = await createOrder();
+        const orderId = result && (result.order_id || result.id || result.orderId);
+        const nextUrl = new URL('../order-tracking/index.html', window.location.href);
+        nextUrl.searchParams.set('mode', mode);
+        if (orderId) nextUrl.searchParams.set('orderId', String(orderId));
+        window.location.href = nextUrl.toString();
+      } catch (err) {
+        setSubmitError(err && err.message ? err.message : 'No se pudo crear la orden.');
+      } finally {
+        if (proceedBtn) {
+          proceedBtn.disabled = false;
+          proceedBtn.textContent = 'Continuar';
+        }
+      }
+    })();
   } else {
     // Scroll to first error
     const firstErr = document.querySelector('p.text-red-600:not(.hidden)');
