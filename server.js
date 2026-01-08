@@ -23,6 +23,11 @@ app.get('/config.js', (req, res) => {
   );
 });
 
+// Home: login
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'mod-4-seguridad', 'Inicio sesión', 'Inicio-sesion.html'));
+});
+
 // Serve the workspace as static files
 app.use(express.static(__dirname));
 
