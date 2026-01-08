@@ -23,6 +23,11 @@ app.get('/config.js', (req, res) => {
   );
 });
 
+// Compatibilidad Vercel: mismo contenido que /config.js
+app.get('/api/config.js', (req, res) => {
+  res.redirect(302, '/config.js');
+});
+
 // Home: login
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'mod-4-seguridad', 'Inicio sesión', 'Inicio-sesion.html'));
