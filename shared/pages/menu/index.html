@@ -8,10 +8,12 @@
     <link rel="stylesheet" href="../../styles/global.css" />
     <link rel="stylesheet" href="./page.css" />
 
+    <script src="/config.js"></script>
+
     <script>
       // Tailwind CDN lee esta config al cargar.
       // Nota: no usamos `tailwind.config = ...` aquí porque `tailwind` todavía no existe.
-      // Si en el futuro usas Vite: reemplaza la config runtime por `import.meta.env.VITE_BACKEND_URL`.
+      // Si en el futuro usas Vite: reemplaza la config runtime por `import.meta.env.VITE_DP_URL`.
       window.tailwind = {
         config: {
           theme: {
@@ -137,12 +139,12 @@
     <script>
       // --- Config de URLs (no se puede leer .env directo desde el navegador) ---
       // Formas recomendadas de inyectar en frontend:
-      // 1) Vite: import.meta.env.VITE_BACKEND_URL / import.meta.env.VITE_KITCHEN_URL
-      // 2) Archivo `config.js`: window.__APP_CONFIG__ = { BACKEND_URL: '...', KITCHEN_URL: '...' }
+      // 1) Vite: import.meta.env.VITE_DP_URL / import.meta.env.VITE_KITCHEN_URL
+      // 2) Archivo `config.js`: window.__APP_CONFIG__ = { DP_URL: '...', KITCHEN_URL: '...' }
       // 3) Prototipo local: localStorage.setItem('KITCHEN_URL', 'https://...')
-      const BACKEND_URL =
-        (window.__APP_CONFIG__ && window.__APP_CONFIG__.BACKEND_URL) ||
-        localStorage.getItem('BACKEND_URL') ||
+      const DP_URL =
+        (window.__APP_CONFIG__ && window.__APP_CONFIG__.DP_URL) ||
+        localStorage.getItem('DP_URL') ||
         'http://localhost:3000';
 
       const KITCHEN_URL =
@@ -635,7 +637,7 @@
 
           // Si por alguna razón no hay items kitchen, intentamos el catálogo dp
           if (!products.length) {
-            const res = await fetch(`${BACKEND_URL}/api/dp/v1/catalog`, {
+            const res = await fetch(`${DP_URL}/api/dp/v1/catalog`, {
               method: 'GET',
               headers: { Accept: 'application/json' }
             });

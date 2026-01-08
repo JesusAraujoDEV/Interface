@@ -6,7 +6,48 @@ const coverage = document.getElementById('coverage');
 
 // Zonas de cobertura (solo entrega)
 const zoneInput = document.getElementById('zone');
-const zoneChips = document.querySelectorAll('.zone-chip');
+const zoneChipsWrap = document.getElementById('zoneChips');
+let zoneChips = Array.from(document.querySelectorAll('.zone-chip'));
+
+function normalizeBaseUrl(url) {
+  const raw = String(url ?? '').trim();
+  if (!raw) return '';
+  return raw.replace(/\/+$/g, '');
+}
+
+function getDpUrl() {
+  return (
+    (window.__APP_CONFIG__ && window.__APP_CONFIG__.DP_URL) ||
+    localStorage.getItem('DP_URL') ||
+    ''
+  );
+}
+
+function formatEtaMinutes(value) {
+  const minutes = Number(value);
+  if (!Number.isFinite(minutes) || minutes <= 0) return '';
+  return `${minutes} min`;
+}
+
+function formatShippingCost(value) {
+  const num = parsePrice(value);
+  if (!Number.isFinite(num) || num <= 0) return '$0.00';
+  return '$' + num.toFixed(2);
+}
+
+function updateCoverageFromSelectedChip() {
+  const selected = zoneChips.find(btn => btn.classList.contains('bg-brand-800'));
+  if (!selected) return;
+
+  const eta = selected.dataset.etaMinutes;
+  const shipping = selected.dataset.shippingCost;
+  const etaText = formatEtaMinutes(eta);
+  const shippingText = formatShippingCost(shipping);
+
+  if (deliveryBtn.getAttribute('aria-pressed') === 'true') {
+    coverage.textContent = etaText ? `${shippingText} · ${etaText}` : shippingText;
+  }
+}
 
 // Carrito (solo visualización en checkout)
 const CART_KEY = 'dp_cart_v1';
@@ -108,11 +149,68 @@ function setZone(zone) {
     btn.classList.toggle('text-gray-700', !isActive);
     btn.classList.toggle('border-gray-200', !isActive);
   });
+
+  updateCoverageFromSelectedChip();
 }
 
-zoneChips.forEach(btn => {
-  btn.addEventListener('click', () => setZone(btn.dataset.zone));
-});
+function renderZones(zones) {
+  if (!zoneChipsWrap) return;
+
+  zoneChipsWrap.innerHTML = zones
+    .map(z => {
+      const name = String(z.zone_name ?? '').trim();
+      const zoneId = String(z.zone_id ?? '').trim();
+      const eta = z.estimated_eta_minutes;
+      const shipping = z.shipping_cost;
+
+      // data-zone mantiene compatibilidad con setZone(name)
+      return `
+        <button
+          type="button"
+          data-zone="${name.replace(/"/g, '&quot;')}"
+          data-zone-id="${zoneId.replace(/"/g, '&quot;')}"
+          data-eta-minutes="${String(eta ?? '').replace(/"/g, '&quot;')}"
+          data-shipping-cost="${String(shipping ?? '').replace(/"/g, '&quot;')}"
+          class="zone-chip px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-700 hover:border-gray-300"
+        >${name}</button>
+      `;
+    })
+    .join('');
+
+  zoneChips = Array.from(zoneChipsWrap.querySelectorAll('.zone-chip'));
+}
+
+async function loadZones() {
+  try {
+    const base = normalizeBaseUrl(getDpUrl());
+    const url = base ? `${base}/api/dp/v1/zones` : '/api/dp/v1/zones';
+
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error(`zones_fetch_${res.status}`);
+    const data = await res.json();
+
+    const zones = Array.isArray(data) ? data : [];
+    const active = zones.filter(z => z && z.is_active);
+    if (!active.length) return;
+
+    renderZones(active);
+
+    const preferred = active.find(z => String(z.zone_name).toLowerCase() === 'prebo');
+    const initial = preferred?.zone_name || active[0].zone_name;
+    if (initial) setZone(initial);
+  } catch {
+    // Fallback: mantener chips hardcodeados si el endpoint falla
+    if (zoneChips.length) setZone(zoneChips[0].dataset.zone);
+  }
+}
+
+if (zoneChipsWrap) {
+  zoneChipsWrap.addEventListener('click', e => {
+    const btn = e.target.closest('.zone-chip');
+    if (!btn) return;
+    setZone(btn.dataset.zone);
+  });
+}
 
 function setMode(mode) {
   if (mode === 'delivery') {
@@ -147,8 +245,8 @@ pickupBtn.addEventListener('click', () => setMode('pickup'));
 // Initialize default
 setMode('delivery');
 
-// Selección por defecto (puedes cambiarla o quitarla)
-setZone('Prebo');
+// Zonas desde backend (fallback a las hardcodeadas si falla)
+loadZones();
 
 // Basic validation
 const form = document.getElementById('checkoutForm');
